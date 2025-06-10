@@ -2,15 +2,13 @@
  "name": "my-app",
  "version": "0.1.0",
  "private": true,
-  "scripts": {
-    "dev": "PORT=8000 next dev --turbopack",
-    "build:css": "tailwindcss -i ./src/app/globals.css -o ./src/app/tailwind.css --minify",
-    "build": "npm run build:css && next build",
-    "export": "next export",
-    "deploy": "npm run build && npm run export",
-    "start": "next start",
-    "lint": "next lint"
-  },
+ "scripts": {
+  "dev": "next dev --turbopack",
+  "build:css": "tailwindcss -i ./src/app/globals.css -o ./src/app/tailwind.css --minify",
+  "build": "npm run build:css && next build && next export",
+  "start": "next start",
+  "lint": "next lint"
+ },
  "dependencies": {
   "@hookform/resolvers": "^5.0.1",
   "@radix-ui/react-accordion": "^1.2.10",
