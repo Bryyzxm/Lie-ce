@@ -32,7 +32,7 @@ export default function Home() {
  }, [transactions]);
 
  // Filter products by search term
- const filteredProducts = products.filter((product) => product.name.toLowerCase().includes(searchTerm.toLowerCase()) || product.code.toLowerCase().includes(searchTerm.toLowerCase()));
+ const filteredProducts = products.filter((product) => product.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
  return (
   <main className="min-h-screen bg-white text-black p-6 max-w-7xl mx-auto space-y-10">
