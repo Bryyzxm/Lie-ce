@@ -5,7 +5,7 @@
  "scripts": {
   "dev": "next dev --turbopack",
   "build:css": "tailwindcss -i ./src/app/globals.css -o ./src/app/tailwind.css --minify",
-  "build": "npm run build:css && next build",
+  "build": "next build && next export",
   "start": "next start",
   "lint": "next lint"
  },
