@@ -7,7 +7,6 @@ export interface Product {
  name: string;
  stock: number;
  price: number;
- code: string;
  modalPrice: number;
  exp: string;
 }
@@ -18,7 +17,7 @@ interface ProductManagerProps {
 }
 
 export default function ProductManager({products, setProducts}: Readonly<ProductManagerProps>) {
- const [form, setForm] = useState<{id: string; name: string; stock: string; price: string; modalPrice: string; exp: string; code: string}>({id: '', name: '', stock: '', price: '', modalPrice: '', exp: '', code: ''});
+ const [form, setForm] = useState<{id: string; name: string; stock: string; price: string; modalPrice: string; exp: string}>({id: '', name: '', stock: '', price: '', modalPrice: '', exp: ''});
  const [editingId, setEditingId] = useState<string | null>(null);
 
  // Handle input change
@@ -38,7 +37,6 @@ export default function ProductManager({products, setProducts}: Readonly<Product
    price: Number(form.price),
    modalPrice: Number(form.modalPrice),
    exp: form.exp,
-   code: form.code,
   };
 
   if (editingId) {
@@ -49,7 +47,7 @@ export default function ProductManager({products, setProducts}: Readonly<Product
    // Add new product
    setProducts([...products, newProduct]);
   }
-  setForm({id: '', name: '', stock: '', price: '', modalPrice: '', exp: '', code: ''});
+  setForm({id: '', name: '', stock: '', price: '', modalPrice: '', exp: ''});
  };
 
  // Edit product
@@ -63,7 +61,6 @@ export default function ProductManager({products, setProducts}: Readonly<Product
     price: product.price.toString(),
     modalPrice: product.modalPrice.toString(),
     exp: product.exp,
-    code: product.code,
    });
    setEditingId(id);
   }
@@ -124,15 +121,6 @@ export default function ProductManager({products, setProducts}: Readonly<Product
     />
     <input
      type="text"
-     name="code"
-     placeholder="Product Code"
-     value={form.code}
-     onChange={handleChange}
-     className="border border-gray-400 p-3 rounded focus:outline-none focus:ring-2 focus:ring-black transition"
-     required
-    />
-    <input
-     type="text"
      name="exp"
      placeholder="Exp Product"
      value={form.exp}
@@ -154,7 +142,6 @@ export default function ProductManager({products, setProducts}: Readonly<Product
       <th className="border border-gray-300 p-3 text-left font-medium">Stock</th>
       <th className="border border-gray-300 p-3 text-left font-medium">Price</th>
       <th className="border border-gray-300 p-3 text-left font-medium">Harga Modal</th>
-      <th className="border border-gray-300 p-3 text-left font-medium">Code</th>
       <th className="border border-gray-300 p-3 text-left font-medium">Exp Product</th>
       <th className="border border-gray-300 p-3 text-left font-medium">Actions</th>
      </tr>
@@ -169,7 +156,6 @@ export default function ProductManager({products, setProducts}: Readonly<Product
        <td className="border border-gray-300 p-3">{product.stock}</td>
        <td className="border border-gray-300 p-3">{product.price.toLocaleString()}</td>
        <td className="border border-gray-300 p-3">{product.modalPrice.toLocaleString()}</td>
-       <td className="border border-gray-300 p-3">{product.code}</td>
        <td className="border border-gray-300 p-3">{product.exp}</td>
        <td className="border border-gray-300 p-3 space-x-4">
         <button
@@ -190,7 +176,7 @@ export default function ProductManager({products, setProducts}: Readonly<Product
      {products.length === 0 && (
       <tr>
        <td
-        colSpan={7}
+        colSpan={6}
         className="text-center p-6 text-gray-500 italic"
        >
         No products available.
