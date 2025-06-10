@@ -1,5 +1,5 @@
 import React from 'react';
-import './tailwind.css';
+import './globals.css';
 
 export const metadata = {
  title: 'Lie-ce',
