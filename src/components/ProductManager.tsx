@@ -7,7 +7,7 @@ interface Product {
  name: string;
  stock: number;
  price: number;
- code: string;
+ modalPrice: number;
  exp: string;
 }
 
@@ -17,7 +17,7 @@ interface ProductManagerProps {
 }
 
 export default function ProductManager({products, setProducts}: ProductManagerProps) {
- const [form, setForm] = useState({id: '', name: '', stock: '', price: '', code: '', exp: ''});
+ const [form, setForm] = useState<{id: string; name: string; stock: string; price: string; modalPrice: string; exp: string}>({id: '', name: '', stock: '', price: '', modalPrice: '', exp: ''});
  const [editingId, setEditingId] = useState<string | null>(null);
 
  // Handle input change
@@ -28,14 +28,14 @@ export default function ProductManager({products, setProducts}: ProductManagerPr
  // Add or update product
  const handleSubmit = (e: React.FormEvent) => {
   e.preventDefault();
-  if (!form.name || !form.code) return;
+  if (!form.name) return;
 
   const newProduct = {
    id: editingId || crypto.randomUUID(),
    name: form.name,
    stock: Number(form.stock),
    price: Number(form.price),
-   code: form.code,
+   modalPrice: Number(form.modalPrice),
    exp: form.exp,
   };
 
@@ -47,7 +47,7 @@ export default function ProductManager({products, setProducts}: ProductManagerPr
    // Add new product
    setProducts([...products, newProduct]);
   }
-  setForm({id: '', name: '', stock: '', price: '', code: '', exp: ''});
+  setForm({id: '', name: '', stock: '', price: '', modalPrice: '', exp: ''});
  };
 
  // Edit product
@@ -59,7 +59,7 @@ export default function ProductManager({products, setProducts}: ProductManagerPr
     name: product.name,
     stock: product.stock.toString(),
     price: product.price.toString(),
-    code: product.code,
+    modalPrice: product.modalPrice.toString(),
     exp: product.exp,
    });
    setEditingId(id);
@@ -110,12 +110,13 @@ export default function ProductManager({products, setProducts}: ProductManagerPr
      required
     />
     <input
-     type="text"
-     name="code"
-     placeholder="Product Code"
-     value={form.code}
+     type="number"
+     name="modalPrice"
+     placeholder="Harga Modal"
+     value={form.modalPrice}
      onChange={handleChange}
      className="border border-gray-400 p-3 rounded focus:outline-none focus:ring-2 focus:ring-black transition"
+     min={0}
      required
     />
     <input
@@ -140,7 +141,7 @@ export default function ProductManager({products, setProducts}: ProductManagerPr
       <th className="border border-gray-300 p-3 text-left font-medium">Name</th>
       <th className="border border-gray-300 p-3 text-left font-medium">Stock</th>
       <th className="border border-gray-300 p-3 text-left font-medium">Price</th>
-      <th className="border border-gray-300 p-3 text-left font-medium">Code</th>
+      <th className="border border-gray-300 p-3 text-left font-medium">Harga Modal</th>
       <th className="border border-gray-300 p-3 text-left font-medium">Exp Product</th>
       <th className="border border-gray-300 p-3 text-left font-medium">Actions</th>
      </tr>
@@ -154,7 +155,7 @@ export default function ProductManager({products, setProducts}: ProductManagerPr
        <td className="border border-gray-300 p-3">{product.name}</td>
        <td className="border border-gray-300 p-3">{product.stock}</td>
        <td className="border border-gray-300 p-3">{product.price.toLocaleString()}</td>
-       <td className="border border-gray-300 p-3">{product.code}</td>
+       <td className="border border-gray-300 p-3">{product.modalPrice.toLocaleString()}</td>
        <td className="border border-gray-300 p-3">{product.exp}</td>
        <td className="border border-gray-300 p-3 space-x-4">
         <button
