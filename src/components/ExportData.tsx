@@ -10,19 +10,14 @@ interface Transaction {
  total: number;
 }
 
-interface Product {
- id: string;
- name: string;
- price: number;
- modalPrice: number;
-}
+import {Product} from './ProductManager';
 
 interface ExportDataProps {
  transactions: Transaction[];
  products: Product[];
 }
 
-export default function ExportData({transactions, products}: ExportDataProps) {
+export default function ExportData({transactions, products}: Readonly<ExportDataProps>) {
  // Convert transactions with product details to CSV string
  const convertToCSV = () => {
   const headers = ['Transaction ID', 'Date', 'Product Name', 'Product ID', 'Product Found', 'Quantity', 'Price', 'Modal Price', 'Total', 'Profit'];

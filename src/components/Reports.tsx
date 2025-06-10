@@ -10,12 +10,7 @@ interface Transaction {
  total: number;
 }
 
-interface Product {
- id: string;
- name: string;
- price: number;
- modalPrice: number;
-}
+import {Product} from './ProductManager';
 
 interface ReportsProps {
  transactions: Transaction[];
@@ -43,7 +38,7 @@ function filterByDateRange(transactions: Transaction[], start: Date, end: Date) 
  });
 }
 
-export default function Reports({transactions, products}: ReportsProps) {
+export default function Reports({transactions, products}: Readonly<ReportsProps>) {
  const now = new Date();
 
  // Daily: today

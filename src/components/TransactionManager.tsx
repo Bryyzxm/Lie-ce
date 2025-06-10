@@ -2,15 +2,9 @@
 
 import React, {useState} from 'react';
 
-interface Product {
- id: string;
- name: string;
- stock: number;
- price: number;
- code: string;
-}
+import {Product} from './ProductManager';
 
-interface Transaction {
+export interface Transaction {
  id: string;
  date: string;
  productId: string;
@@ -25,7 +19,7 @@ interface TransactionManagerProps {
  setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
 }
 
-export default function TransactionManager({products, transactions, setTransactions, setProducts}: TransactionManagerProps) {
+export default function TransactionManager({products, transactions, setTransactions, setProducts}: Readonly<TransactionManagerProps>) {
  const [form, setForm] = useState({
   date: new Date().toISOString().slice(0, 10),
   productId: '',

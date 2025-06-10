@@ -1,22 +1,22 @@
 'use client';
 
 import React, {useState, useEffect} from 'react';
-import ProductManager from '../components/ProductManager';
-import TransactionManager from '../components/TransactionManager';
+import ProductManager, {Product} from '../components/ProductManager';
+import TransactionManager, {Transaction} from '../components/TransactionManager';
 import StockView from '../components/StockView';
 import Reports from '../components/Reports';
 import ExportData from '../components/ExportData';
 import SearchFilter from '../components/SearchFilter';
 
 export default function Home() {
- const [products, setProducts] = useState<any[]>([]);
- const [transactions, setTransactions] = useState<any[]>([]);
+ const [products, setProducts] = useState<Product[]>([]);
+ const [transactions, setTransactions] = useState<Transaction[]>([]);
  const [searchTerm, setSearchTerm] = useState<string>('');
 
  // Load data from localStorage on mount
  useEffect(() => {
-  const storedProducts = JSON.parse(localStorage.getItem('products') || '[]');
-  const storedTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+  const storedProducts = JSON.parse(localStorage.getItem('products') ?? '[]') as Product[];
+  const storedTransactions = JSON.parse(localStorage.getItem('transactions') ?? '[]') as Transaction[];
   setProducts(storedProducts);
   setTransactions(storedTransactions);
  }, []);

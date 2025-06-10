@@ -2,11 +2,12 @@
 
 import React, {useState} from 'react';
 
-interface Product {
+export interface Product {
  id: string;
  name: string;
  stock: number;
  price: number;
+ code: string;
  modalPrice: number;
  exp: string;
 }
@@ -16,8 +17,8 @@ interface ProductManagerProps {
  setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
 }
 
-export default function ProductManager({products, setProducts}: ProductManagerProps) {
- const [form, setForm] = useState<{id: string; name: string; stock: string; price: string; modalPrice: string; exp: string}>({id: '', name: '', stock: '', price: '', modalPrice: '', exp: ''});
+export default function ProductManager({products, setProducts}: Readonly<ProductManagerProps>) {
+ const [form, setForm] = useState<{id: string; name: string; stock: string; price: string; modalPrice: string; exp: string; code: string}>({id: '', name: '', stock: '', price: '', modalPrice: '', exp: '', code: ''});
  const [editingId, setEditingId] = useState<string | null>(null);
 
  // Handle input change
@@ -31,12 +32,13 @@ export default function ProductManager({products, setProducts}: ProductManagerPr
   if (!form.name) return;
 
   const newProduct = {
-   id: editingId || crypto.randomUUID(),
+   id: editingId ?? crypto.randomUUID(),
    name: form.name,
    stock: Number(form.stock),
    price: Number(form.price),
    modalPrice: Number(form.modalPrice),
    exp: form.exp,
+   code: form.code,
   };
 
   if (editingId) {
@@ -47,7 +49,7 @@ export default function ProductManager({products, setProducts}: ProductManagerPr
    // Add new product
    setProducts([...products, newProduct]);
   }
-  setForm({id: '', name: '', stock: '', price: '', modalPrice: '', exp: ''});
+  setForm({id: '', name: '', stock: '', price: '', modalPrice: '', exp: '', code: ''});
  };
 
  // Edit product
@@ -61,6 +63,7 @@ export default function ProductManager({products, setProducts}: ProductManagerPr
     price: product.price.toString(),
     modalPrice: product.modalPrice.toString(),
     exp: product.exp,
+    code: product.code,
    });
    setEditingId(id);
   }
@@ -78,7 +81,7 @@ export default function ProductManager({products, setProducts}: ProductManagerPr
    <h2 className="text-2xl font-semibold mb-6 border-b border-gray-300 pb-2">Manage Products</h2>
    <form
     onSubmit={handleSubmit}
-    className="mb-6 grid grid-cols-1 sm:grid-cols-5 gap-4"
+    className="mb-6 grid grid-cols-1 sm:grid-cols-6 gap-4"
    >
     <input
      type="text"
@@ -121,6 +124,15 @@ export default function ProductManager({products, setProducts}: ProductManagerPr
     />
     <input
      type="text"
+     name="code"
+     placeholder="Product Code"
+     value={form.code}
+     onChange={handleChange}
+     className="border border-gray-400 p-3 rounded focus:outline-none focus:ring-2 focus:ring-black transition"
+     required
+    />
+    <input
+     type="text"
      name="exp"
      placeholder="Exp Product"
      value={form.exp}
@@ -142,6 +154,7 @@ export default function ProductManager({products, setProducts}: ProductManagerPr
       <th className="border border-gray-300 p-3 text-left font-medium">Stock</th>
       <th className="border border-gray-300 p-3 text-left font-medium">Price</th>
       <th className="border border-gray-300 p-3 text-left font-medium">Harga Modal</th>
+      <th className="border border-gray-300 p-3 text-left font-medium">Code</th>
       <th className="border border-gray-300 p-3 text-left font-medium">Exp Product</th>
       <th className="border border-gray-300 p-3 text-left font-medium">Actions</th>
      </tr>
@@ -156,6 +169,7 @@ export default function ProductManager({products, setProducts}: ProductManagerPr
        <td className="border border-gray-300 p-3">{product.stock}</td>
        <td className="border border-gray-300 p-3">{product.price.toLocaleString()}</td>
        <td className="border border-gray-300 p-3">{product.modalPrice.toLocaleString()}</td>
+       <td className="border border-gray-300 p-3">{product.code}</td>
        <td className="border border-gray-300 p-3">{product.exp}</td>
        <td className="border border-gray-300 p-3 space-x-4">
         <button
@@ -176,7 +190,7 @@ export default function ProductManager({products, setProducts}: ProductManagerPr
      {products.length === 0 && (
       <tr>
        <td
-        colSpan={6}
+        colSpan={7}
         className="text-center p-6 text-gray-500 italic"
        >
         No products available.
