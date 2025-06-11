@@ -27,7 +27,7 @@ export default function StockView({products}: Readonly<StockViewProps>) {
     </thead>
     <tbody>
      {products.map((product) => {
-      const isLowStock = product.stock < 5;
+      const isLowStock = product.stock < 3;
       return (
        <tr
         key={product.id}

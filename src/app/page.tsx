@@ -15,9 +15,19 @@ export default function Home() {
 
  // Load data from localStorage on mount
  useEffect(() => {
-  const storedProducts = JSON.parse(localStorage.getItem('products') ?? '[]') as Product[];
-  const storedTransactions = JSON.parse(localStorage.getItem('transactions') ?? '[]') as Transaction[];
-  setProducts(storedProducts);
+  const storedProductsRaw = JSON.parse(localStorage.getItem('products') ?? '[]');
+  // Data migration: pastikan field yang dibutuhkan selalu ada
+  const migratedProducts: Product[] = storedProductsRaw.map((p: Partial<Product>) => ({
+   id: p.id ?? '',
+   name: p.name ?? '',
+   stock: p.stock ?? 0,
+   price: p.price ?? 0,
+   modalPrice: p.modalPrice ?? 0,
+   exp: p.exp ?? '',
+  }));
+  setProducts(migratedProducts);
+
+  const storedTransactions = JSON.parse(localStorage.getItem('transactions') ?? '[]');
   setTransactions(storedTransactions);
  }, []);
 
