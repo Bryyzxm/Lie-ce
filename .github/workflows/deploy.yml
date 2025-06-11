@@ -28,8 +28,10 @@ jobs:
      run: npm run build
 
    - name: Deploy to GitHub Pages
-     uses: peaceiris/actions-gh-pages@v4
-     with:
-      github_token: ${{ secrets.GITHUB_TOKEN }}
-      publish_dir: ./out
-      publish_branch: gh-pages
+     run: |
+      git config --global user.name "github-actions[bot]"
+      git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      git pull origin gh-pages || true
+      git push origin gh-pages
+     env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
