@@ -22,9 +22,11 @@ Live: https://bryyzxm.github.io/Lie-ce/
 1. Daftar di https://supabase.com (free tier cukup), buat project baru.
 2. Buka **SQL Editor**, tempel seluruh isi [`supabase/schema.sql`](supabase/schema.sql), jalankan.
    Script ini membuat tabel `products`, `transactions`, `members`, kebijakan RLS, dan fungsi `record_sale` / `delete_transaction`. Aman dijalankan ulang.
-3. Buka **Settings -> API Keys**, catat:
-   - **Project URL** (dari **Settings -> Data API**) -> `NEXT_PUBLIC_SUPABASE_URL`
-   - **anon public** key (`eyJ…`) **atau** **publishable** key (`sb_publishable_…`) -> `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+3. Catat dua nilai:
+   - **Settings -> Data API -> Project URL** -> `NEXT_PUBLIC_SUPABASE_URL`.
+     Cukup origin-nya, mis. `https://xxxx.supabase.co`. Kalau path `/rest/v1/` ikut tertempel, aplikasi otomatis memotongnya.
+   - **Settings -> API Keys** -> `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+     Boleh **anon public** (`eyJ…`) atau **publishable** (`sb_publishable_…`).
 
 > Kedua format key didukung `@supabase/supabase-js` yang dipakai di sini. Key ini memang ikut terpasang di file JavaScript publik dan itu normal. Yang menjaga data adalah RLS + allowlist `members`: tanpa login yang terdaftar, key itu tidak bisa membaca atau menulis apa pun. Jangan pakai `service_role` / `sb_secret_…` — key itu melewati RLS.
 

@@ -10,7 +10,28 @@ import {createClient, type SupabaseClient} from '@supabase/supabase-js';
  * adalah Row Level Security + allowlist tabel `members` di database.
  */
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() ?? '';
+/**
+ * Ambil origin dari nilai yang ditempel user.
+ *
+ * Dashboard Supabase menampilkan URL Data API lengkap dengan path
+ * (`https://xxx.supabase.co/rest/v1/`). Client butuh origin saja; kalau path
+ * ikut terbawa, semua request jadi `/rest/v1/rest/v1/...` dan server menjawab
+ * "Invalid path specified in request URL". Skema yang lupa ditulis juga
+ * dilengkapi, karena `createClient` menolak nilai tanpa `http(s)://`.
+ */
+function toOrigin(raw: string | undefined): string {
+ const trimmed = raw?.trim() ?? '';
+ if (!trimmed) return '';
+
+ const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+ try {
+  return new URL(withScheme).origin;
+ } catch {
+  return trimmed;
+ }
+}
+
+const supabaseUrl = toOrigin(process.env.NEXT_PUBLIC_SUPABASE_URL);
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() ?? '';
 
 export const isSupabaseConfigured = supabaseUrl.length > 0 && supabaseAnonKey.length > 0;
