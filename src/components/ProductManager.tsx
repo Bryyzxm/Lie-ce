@@ -1,75 +1,79 @@
 'use client';
 
-import React, {useState} from 'react';
+import React, {useMemo, useState} from 'react';
 
-export interface Product {
- id: string;
- name: string;
- stock: number;
- price: number;
- modalPrice: number;
- exp: string;
-}
+import type {Product, ProductInput} from '../lib/types';
 
 interface ProductManagerProps {
  products: Product[];
- setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
+ busy: boolean;
+ createAction: (input: ProductInput) => Promise<boolean>;
+ updateAction: (id: string, input: ProductInput) => Promise<boolean>;
+ deleteAction: (id: string) => Promise<boolean>;
 }
 
-export default function ProductManager({products, setProducts}: Readonly<ProductManagerProps>) {
- const [form, setForm] = useState<{id: string; name: string; stock: string; price: string; modalPrice: string; exp: string}>({id: '', name: '', stock: '', price: '', modalPrice: '', exp: ''});
+const EMPTY_FORM = {name: '', stock: '', price: '', modalPrice: '', exp: ''};
+
+export default function ProductManager({products, busy, createAction, updateAction, deleteAction}: Readonly<ProductManagerProps>) {
+ const [form, setForm] = useState<typeof EMPTY_FORM>(EMPTY_FORM);
  const [editingId, setEditingId] = useState<string | null>(null);
 
- // Handle input change
+ // Produk kedaluwarsa bulan ini atau bulan depan ditandai merah.
+ const expWarnings = useMemo(() => {
+  const now = new Date();
+  const limit = new Date(now.getFullYear(), now.getMonth() + 1, 1).getTime();
+  const flagged: Record<string, true> = {};
+
+  for (const product of products) {
+   const [year, month] = product.exp.split('-').map(Number);
+   if (!Number.isFinite(year) || !Number.isFinite(month)) continue;
+   if (new Date(year, month - 1, 1).getTime() <= limit) flagged[product.id] = true;
+  }
+
+  return flagged;
+ }, [products]);
+
  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   setForm({...form, [e.target.name]: e.target.value});
  };
 
- // Add or update product
- const handleSubmit = (e: React.FormEvent) => {
+ const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
-  if (!form.name) return;
+  if (!form.name.trim()) return;
 
-  const newProduct = {
-   id: editingId ?? crypto.randomUUID(),
-   name: form.name,
+  const input: ProductInput = {
+   name: form.name.trim(),
    stock: Number(form.stock),
    price: Number(form.price),
    modalPrice: Number(form.modalPrice),
    exp: form.exp,
   };
 
-  if (editingId) {
-   // Update existing product
-   setProducts(products.map((p) => (p.id === editingId ? newProduct : p)));
+  const ok = editingId ? await updateAction(editingId, input) : await createAction(input);
+  if (!ok) return;
+
+  setEditingId(null);
+  setForm(EMPTY_FORM);
+ };
+
+ const handleEdit = (product: Product) => {
+  setForm({
+   name: product.name,
+   stock: product.stock.toString(),
+   price: product.price.toString(),
+   modalPrice: product.modalPrice.toString(),
+   exp: product.exp,
+  });
+  setEditingId(product.id);
+ };
+
+ const handleDelete = async (id: string) => {
+  if (!confirm('Hapus produk ini?')) return;
+
+  const ok = await deleteAction(id);
+  if (ok && editingId === id) {
    setEditingId(null);
-  } else {
-   // Add new product
-   setProducts([...products, newProduct]);
-  }
-  setForm({id: '', name: '', stock: '', price: '', modalPrice: '', exp: ''});
- };
-
- // Edit product
- const handleEdit = (id: string) => {
-  const product = products.find((p) => p.id === id);
-  if (product) {
-   setForm({
-    id: product.id,
-    name: product.name,
-    stock: product.stock.toString(),
-    price: product.price.toString(),
-    modalPrice: product.modalPrice.toString(),
-    exp: product.exp,
-   });
-   setEditingId(id);
-  }
- };
-
- // Delete product
- const handleDelete = (id: string) => {
-  if (confirm('Are you sure you want to delete this product?')) {
-   setProducts(products.filter((p) => p.id !== id));
+   setForm(EMPTY_FORM);
   }
  };
 
@@ -120,7 +124,7 @@ export default function ProductManager({products, setProducts}: Readonly<Product
      required
     />
     <input
-     type="text"
+     type="month"
      name="exp"
      placeholder="Exp Product"
      value={form.exp}
@@ -128,63 +132,82 @@ export default function ProductManager({products, setProducts}: Readonly<Product
      className="border border-gray-400 p-3 rounded focus:outline-none focus:ring-2 focus:ring-black transition"
      required
     />
-    <button
-     type="submit"
-     className="bg-black text-white rounded px-6 py-3 hover:bg-gray-900 transition font-semibold"
-    >
-     {editingId ? 'Update' : 'Add'}
-    </button>
-   </form>
-   <table className="w-full border-collapse border border-gray-300 shadow-sm">
-    <thead>
-     <tr className="bg-gray-100">
-      <th className="border border-gray-300 p-3 text-left font-medium">Name</th>
-      <th className="border border-gray-300 p-3 text-left font-medium">Stock</th>
-      <th className="border border-gray-300 p-3 text-left font-medium">Price</th>
-      <th className="border border-gray-300 p-3 text-left font-medium">Harga Modal</th>
-      <th className="border border-gray-300 p-3 text-left font-medium">Exp Product</th>
-      <th className="border border-gray-300 p-3 text-left font-medium">Actions</th>
-     </tr>
-    </thead>
-    <tbody>
-     {products.map((product) => (
-      <tr
-       key={product.id}
-       className="hover:bg-gray-50 transition"
+    <div className="flex gap-2">
+     <button
+      type="submit"
+      disabled={busy}
+      className="flex-1 bg-black text-white rounded px-6 py-3 hover:bg-gray-900 transition font-semibold disabled:opacity-50"
+     >
+      {editingId ? 'Update' : 'Add'}
+     </button>
+     {editingId && (
+      <button
+       type="button"
+       onClick={() => {
+        setEditingId(null);
+        setForm(EMPTY_FORM);
+       }}
+       className="border border-gray-400 rounded px-4 py-3 hover:bg-gray-100 transition font-semibold"
       >
-       <td className="border border-gray-300 p-3">{product.name}</td>
-       <td className="border border-gray-300 p-3">{product.stock}</td>
-       <td className="border border-gray-300 p-3">{product.price.toLocaleString()}</td>
-       <td className="border border-gray-300 p-3">{product.modalPrice.toLocaleString()}</td>
-       <td className="border border-gray-300 p-3">{product.exp}</td>
-       <td className="border border-gray-300 p-3 space-x-4">
-        <button
-         onClick={() => handleEdit(product.id)}
-         className="text-blue-600 hover:underline font-semibold"
-        >
-         Edit
-        </button>
-        <button
-         onClick={() => handleDelete(product.id)}
-         className="text-red-600 hover:underline font-semibold"
-        >
-         Delete
-        </button>
-       </td>
-      </tr>
-     ))}
-     {products.length === 0 && (
-      <tr>
-       <td
-        colSpan={6}
-        className="text-center p-6 text-gray-500 italic"
-       >
-        No products available.
-       </td>
-      </tr>
+       Batal
+      </button>
      )}
-    </tbody>
-   </table>
+    </div>
+   </form>
+   <div className="overflow-x-auto">
+    <table className="w-full border-collapse border border-gray-300 shadow-sm">
+     <thead>
+      <tr className="bg-gray-100">
+       <th className="border border-gray-300 p-3 text-left font-medium">Name</th>
+       <th className="border border-gray-300 p-3 text-left font-medium">Stock</th>
+       <th className="border border-gray-300 p-3 text-left font-medium">Price</th>
+       <th className="border border-gray-300 p-3 text-left font-medium">Harga Modal</th>
+       <th className="border border-gray-300 p-3 text-left font-medium">Exp Product</th>
+       <th className="border border-gray-300 p-3 text-left font-medium">Actions</th>
+      </tr>
+     </thead>
+     <tbody>
+      {products.map((product) => (
+       <tr
+        key={product.id}
+        className="hover:bg-gray-50 transition"
+       >
+        <td className="border border-gray-300 p-3">{product.name}</td>
+        <td className="border border-gray-300 p-3">{product.stock}</td>
+        <td className="border border-gray-300 p-3">{product.price.toLocaleString()}</td>
+        <td className="border border-gray-300 p-3">{product.modalPrice.toLocaleString()}</td>
+        <td className={'border border-gray-300 p-3' + (expWarnings[product.id] ? ' text-red-600 font-bold' : '')}>{product.exp}</td>
+        <td className="border border-gray-300 p-3 space-x-4">
+         <button
+          onClick={() => handleEdit(product)}
+          disabled={busy}
+          className="text-blue-600 hover:underline font-semibold disabled:opacity-50"
+         >
+          Edit
+         </button>
+         <button
+          onClick={() => void handleDelete(product.id)}
+          disabled={busy}
+          className="text-red-600 hover:underline font-semibold disabled:opacity-50"
+         >
+          Delete
+         </button>
+        </td>
+       </tr>
+      ))}
+      {products.length === 0 && (
+       <tr>
+        <td
+         colSpan={6}
+         className="text-center p-6 text-gray-500 italic"
+        >
+         No products available.
+        </td>
+       </tr>
+      )}
+     </tbody>
+    </table>
+   </div>
   </section>
  );
 }

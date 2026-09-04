@@ -1,87 +1,69 @@
 'use client';
 
-import React from 'react';
+import React, {useMemo} from 'react';
 
-interface Transaction {
- id: string;
- date: string;
- productId: string;
- quantity: number;
- total: number;
-}
-
-import {Product} from './ProductManager';
+import type {Transaction} from '../lib/types';
 
 interface ReportsProps {
  transactions: Transaction[];
- products: Product[];
 }
 
-function calculateProfit(transaction: Transaction, products: Product[]) {
- const product = products.find((p) => p.id === transaction.productId);
- if (!product) return 0;
- return (product.price - product.modalPrice) * transaction.quantity;
-}
+/**
+ * Ringkasan penjualan. Profit dihitung dari snapshot harga & modal yang
+ * tersimpan di transaksi, bukan dari harga produk saat ini, supaya laporan
+ * lama tidak berubah ketika harga produk diedit.
+ */
+export default function Reports({transactions}: Readonly<ReportsProps>) {
+ const summary = useMemo(() => {
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfWeek = new Date(startOfDay);
+  startOfWeek.setDate(startOfDay.getDate() - 6);
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-function sumTransactions(transactions: Transaction[]) {
- return transactions.reduce((acc, tx) => acc + tx.total, 0);
-}
+  const buckets = {
+   daily: {label: 'Daily Sales', from: startOfDay, total: 0, profit: 0, count: 0},
+   weekly: {label: 'Weekly Sales', from: startOfWeek, total: 0, profit: 0, count: 0},
+   monthly: {label: 'Monthly Sales', from: startOfMonth, total: 0, profit: 0, count: 0},
+  };
 
-function sumProfits(transactions: Transaction[], products: Product[]) {
- return transactions.reduce((acc, tx) => acc + calculateProfit(tx, products), 0);
-}
+  for (const tx of transactions) {
+   // occurred_on adalah tanggal lokal (YYYY-MM-DD); parse manual agar tidak
+   // bergeser sehari karena interpretasi UTC oleh new Date(string).
+   const [year, month, day] = tx.date.split('-').map(Number);
+   if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) continue;
 
-function filterByDateRange(transactions: Transaction[], start: Date, end: Date) {
- return transactions.filter((tx) => {
-  const txDate = new Date(tx.date);
-  return txDate >= start && txDate <= end;
- });
-}
+   const when = new Date(year, month - 1, day);
+   if (when > now) continue;
 
-export default function Reports({transactions, products}: Readonly<ReportsProps>) {
- const now = new Date();
+   const profit = (tx.unitPrice - tx.unitCost) * tx.quantity;
 
- // Daily: today
- const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
- const dailyTx = filterByDateRange(transactions, startOfDay, now);
- const dailyTotal = sumTransactions(dailyTx);
- const dailyProfit = sumProfits(dailyTx, products);
+   for (const bucket of Object.values(buckets)) {
+    if (when < bucket.from) continue;
+    bucket.total += tx.total;
+    bucket.profit += profit;
+    bucket.count += 1;
+   }
+  }
 
- // Weekly: last 7 days
- const startOfWeek = new Date(now);
- startOfWeek.setDate(now.getDate() - 6);
- const weeklyTx = filterByDateRange(transactions, startOfWeek, now);
- const weeklyTotal = sumTransactions(weeklyTx);
- const weeklyProfit = sumProfits(weeklyTx, products);
-
- // Monthly: current month
- const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
- const monthlyTx = filterByDateRange(transactions, startOfMonth, now);
- const monthlyTotal = sumTransactions(monthlyTx);
- const monthlyProfit = sumProfits(monthlyTx, products);
+  return Object.values(buckets);
+ }, [transactions]);
 
  return (
   <section className="mb-8">
    <h2 className="text-2xl font-semibold mb-6 border-b border-gray-300 pb-2">Sales Reports</h2>
    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-    <div className="p-6 border rounded-lg shadow-md bg-gray-50 flex flex-col items-center">
-     <h3 className="text-lg font-semibold mb-3">Daily Sales</h3>
-     <p className="text-3xl font-extrabold">Rp {dailyTotal.toLocaleString()}</p>
-     <p className="text-sm text-gray-600 mt-1">{dailyTx.length} transactions</p>
-     <p className="text-lg text-green-600 mt-2">Profit: Rp {dailyProfit.toLocaleString()}</p>
-    </div>
-    <div className="p-6 border rounded-lg shadow-md bg-gray-50 flex flex-col items-center">
-     <h3 className="text-lg font-semibold mb-3">Weekly Sales</h3>
-     <p className="text-3xl font-extrabold">Rp {weeklyTotal.toLocaleString()}</p>
-     <p className="text-sm text-gray-600 mt-1">{weeklyTx.length} transactions</p>
-     <p className="text-lg text-green-600 mt-2">Profit: Rp {weeklyProfit.toLocaleString()}</p>
-    </div>
-    <div className="p-6 border rounded-lg shadow-md bg-gray-50 flex flex-col items-center">
-     <h3 className="text-lg font-semibold mb-3">Monthly Sales</h3>
-     <p className="text-3xl font-extrabold">Rp {monthlyTotal.toLocaleString()}</p>
-     <p className="text-sm text-gray-600 mt-1">{monthlyTx.length} transactions</p>
-     <p className="text-lg text-green-600 mt-2">Profit: Rp {monthlyProfit.toLocaleString()}</p>
-    </div>
+    {summary.map((bucket) => (
+     <div
+      key={bucket.label}
+      className="p-6 border rounded-lg shadow-md bg-gray-50 flex flex-col items-center"
+     >
+      <h3 className="text-lg font-semibold mb-3">{bucket.label}</h3>
+      <p className="text-3xl font-extrabold">Rp {bucket.total.toLocaleString()}</p>
+      <p className="text-sm text-gray-600 mt-1">{bucket.count} transactions</p>
+      <p className="text-lg text-green-600 mt-2">Profit: Rp {bucket.profit.toLocaleString()}</p>
+     </div>
+    ))}
    </div>
   </section>
  );

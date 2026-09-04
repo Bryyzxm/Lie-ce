@@ -3,6 +3,7 @@ name: Deploy to GitHub Pages
 on:
  push:
   branches: [main]
+ workflow_dispatch:
 
 permissions:
  contents: write
@@ -13,7 +14,7 @@ jobs:
 
   steps:
    - name: Checkout
-     uses: actions/checkout@v3
+     uses: actions/checkout@v4
 
    - name: Setup Node.js
      uses: actions/setup-node@v4
@@ -24,7 +25,20 @@ jobs:
    - name: Install dependencies
      run: npm ci
 
+   - name: Verify Supabase secrets are set
+     env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+     run: |
+      if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -z "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ]; then
+        echo "::error::Set repository secrets NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (Settings -> Secrets and variables -> Actions). Without them the deployed site cannot reach the shared database."
+        exit 1
+      fi
+
    - name: Build Next.js static export
+     env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
      run: npm run build
 
    - name: Deploy to GitHub Pages
