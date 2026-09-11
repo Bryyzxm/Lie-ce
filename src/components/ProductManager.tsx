@@ -158,6 +158,7 @@ export default function ProductManager({products, busy, createAction, updateActi
     <table className="w-full border-collapse border border-gray-300 shadow-sm">
      <thead>
       <tr className="bg-gray-100">
+       <th className="border border-gray-300 p-3 text-left font-medium w-12">No</th>
        <th className="border border-gray-300 p-3 text-left font-medium">Name</th>
        <th className="border border-gray-300 p-3 text-left font-medium">Stock</th>
        <th className="border border-gray-300 p-3 text-left font-medium">Price</th>
@@ -167,11 +168,12 @@ export default function ProductManager({products, busy, createAction, updateActi
       </tr>
      </thead>
      <tbody>
-      {products.map((product) => (
+      {products.map((product, index) => (
        <tr
         key={product.id}
         className="hover:bg-gray-50 transition"
        >
+        <td className="border border-gray-300 p-3">{index + 1}</td>
         <td className="border border-gray-300 p-3">{product.name}</td>
         <td className="border border-gray-300 p-3">{product.stock}</td>
         <td className="border border-gray-300 p-3">{product.price.toLocaleString()}</td>
@@ -198,7 +200,7 @@ export default function ProductManager({products, busy, createAction, updateActi
       {products.length === 0 && (
        <tr>
         <td
-         colSpan={6}
+         colSpan={7}
          className="text-center p-6 text-gray-500 italic"
         >
          No products available.
