@@ -67,7 +67,7 @@ create trigger on_auth_user_created
 create table if not exists public.products (
   id          uuid primary key default gen_random_uuid(),
   name        text not null check (length(btrim(name)) > 0),
-  stock       integer not null default 0 check (stock >= 0),
+  stock       numeric(20,3) not null default 0 check (stock >= 0),
   price       bigint not null default 0 check (price >= 0),
   modal_price bigint not null default 0 check (modal_price >= 0),
   exp         text check (exp ~ '^\d{4}-(0[1-9]|1[0-2])$'),
@@ -104,16 +104,66 @@ create table if not exists public.transactions (
   product_id   uuid references public.products (id) on delete set null,
   product_name text not null,
   occurred_on  date not null default current_date,
-  quantity     integer not null check (quantity > 0),
+  quantity     numeric(20,3) not null check (quantity > 0),
   unit_price   bigint not null check (unit_price >= 0),
   unit_cost    bigint not null check (unit_cost >= 0),
-  total        bigint generated always as (quantity::bigint * unit_price) stored,
+  total        numeric(30,3) generated always as (quantity * unit_price) stored,
   created_at   timestamptz not null default now(),
   created_by   uuid references auth.users (id) on delete set null
 );
 
 create index if not exists transactions_occurred_on_idx on public.transactions (occurred_on desc);
 create index if not exists transactions_product_id_idx on public.transactions (product_id);
+
+-- ---------------------------------------------------------------------------
+-- 3b. Migrasi quantity/stock desimal tanpa menghapus data lama
+--
+-- Bagian ini diperlukan karena `create table if not exists` tidak mengubah
+-- tabel yang sudah ada. Konversi USING mempertahankan semua nilai integer lama.
+-- Kolom total hanya kolom generated, sehingga dibangun ulang dari sumbernya.
+-- ---------------------------------------------------------------------------
+
+do $$
+begin
+  -- Hapus total integer lama terlebih dahulu agar expression generated lama
+  -- tidak memaksa quantity desimal dibulatkan ke bigint.
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'transactions'
+      and column_name = 'total' and data_type = 'bigint'
+  ) then
+    alter table public.transactions drop column total;
+  end if;
+
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'products'
+      and column_name = 'stock' and data_type = 'integer'
+  ) then
+    alter table public.products
+      alter column stock type numeric(20,3) using stock::numeric;
+  end if;
+
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'transactions'
+      and column_name = 'quantity' and data_type = 'integer'
+  ) then
+    alter table public.transactions
+      alter column quantity type numeric(20,3) using quantity::numeric;
+  end if;
+
+  if not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'transactions'
+      and column_name = 'total'
+  ) then
+    alter table public.transactions
+      add column total numeric(30,3)
+      generated always as (quantity * unit_price) stored;
+  end if;
+end;
+$$;
 
 -- ---------------------------------------------------------------------------
 -- 4. Row Level Security
@@ -174,9 +224,11 @@ create policy transactions_delete_members on public.transactions
 -- 5. RPC: operasi stok harus atomik (banyak device menulis bersamaan)
 -- ---------------------------------------------------------------------------
 
+drop function if exists public.record_sale(uuid, integer, date);
+
 create or replace function public.record_sale(
   p_product_id uuid,
-  p_quantity integer,
+  p_quantity numeric,
   p_occurred_on date default current_date
 )
 returns public.transactions
@@ -266,11 +318,11 @@ grant select, insert, update, delete on public.products to authenticated;
 grant select, insert, update, delete on public.transactions to authenticated;
 
 revoke execute on function public.is_member() from public;
-revoke execute on function public.record_sale(uuid, integer, date) from public;
+revoke execute on function public.record_sale(uuid, numeric, date) from public;
 revoke execute on function public.delete_transaction(uuid) from public;
 
 grant execute on function public.is_member() to authenticated;
-grant execute on function public.record_sale(uuid, integer, date) to authenticated;
+grant execute on function public.record_sale(uuid, numeric, date) to authenticated;
 grant execute on function public.delete_transaction(uuid) to authenticated;
 
 -- ---------------------------------------------------------------------------

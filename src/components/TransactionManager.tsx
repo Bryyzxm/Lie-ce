@@ -3,6 +3,7 @@
 import React, {useState} from 'react';
 
 import type {Product, Transaction} from '../lib/types';
+import {formatDecimal, parseDecimalInput} from '../lib/utils';
 
 interface TransactionManagerProps {
  products: Product[];
@@ -25,8 +26,8 @@ export default function TransactionManager({products, transactions, busy, record
 
  const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
-  const quantity = Number(form.quantity);
-  if (!form.productId || quantity <= 0) return;
+  const quantity = parseDecimalInput(form.quantity);
+  if (!form.productId || quantity === null || quantity <= 0) return;
 
   // Validasi stok final dilakukan database (baris produk dikunci), jadi dua
   // device tidak bisa menjual stok terakhir yang sama.
@@ -57,23 +58,23 @@ export default function TransactionManager({products, transactions, busy, record
      required
     >
      <option value="">Select Product</option>
-     {products.map((product) => (
+      {products.map((product) => (
       <option
        key={product.id}
        value={product.id}
       >
-       {product.name} (Stock: {product.stock})
+       {product.name} (Stock: {formatDecimal(product.stock)})
       </option>
      ))}
     </select>
     <input
-     type="number"
+     type="text"
      name="quantity"
-     placeholder="Quantity"
+     placeholder="Quantity (contoh: 1,5)"
+     inputMode="decimal"
      value={form.quantity}
      onChange={handleChange}
      className="border border-gray-400 p-3 rounded focus:outline-none focus:ring-2 focus:ring-black transition"
-     min={1}
      required
     />
     <button
@@ -103,8 +104,8 @@ export default function TransactionManager({products, transactions, busy, record
        >
         <td className="border border-gray-300 p-3">{tx.date}</td>
         <td className="border border-gray-300 p-3">{tx.productName}</td>
-        <td className="border border-gray-300 p-3">{tx.quantity}</td>
-        <td className="border border-gray-300 p-3">{tx.total.toLocaleString()}</td>
+        <td className="border border-gray-300 p-3">{formatDecimal(tx.quantity)}</td>
+        <td className="border border-gray-300 p-3">{formatDecimal(tx.total)}</td>
         <td className="border border-gray-300 p-3">
          <button
           onClick={() => void deleteAction(tx.id)}

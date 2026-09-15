@@ -3,6 +3,7 @@
 import React from 'react';
 
 import type {Product} from '../lib/types';
+import {formatDecimal} from '../lib/utils';
 
 interface StockViewProps {
  products: Product[];
@@ -32,7 +33,7 @@ export default function StockView({products}: Readonly<StockViewProps>) {
          className="hover:bg-gray-50 transition"
         >
          <td className="border border-gray-300 p-3">{product.name}</td>
-         <td className="border border-gray-300 p-3">{product.stock}</td>
+          <td className="border border-gray-300 p-3">{formatDecimal(product.stock)}</td>
          <td className={`border border-gray-300 p-3 font-semibold ${isLowStock ? 'text-red-600' : 'text-green-600'}`}>{isLowStock ? 'Low Stock' : 'Sufficient'}</td>
         </tr>
        );

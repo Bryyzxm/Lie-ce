@@ -60,9 +60,9 @@ export function toProduct(row: ProductRow): Product {
  return {
   id: row.id,
   name: row.name,
-  stock: row.stock,
-  price: row.price,
-  modalPrice: row.modal_price,
+   stock: Number(row.stock),
+   price: Number(row.price),
+   modalPrice: Number(row.modal_price),
   exp: row.exp ?? '',
  };
 }
@@ -85,9 +85,9 @@ export function toTransaction(row: TransactionRow): Transaction {
   date: row.occurred_on.slice(0, 10),
   productId: row.product_id,
   productName: row.product_name,
-  quantity: row.quantity,
-  unitPrice: row.unit_price,
-  unitCost: row.unit_cost,
-  total: row.total,
+   quantity: Number(row.quantity),
+   unitPrice: Number(row.unit_price),
+   unitCost: Number(row.unit_cost),
+   total: Number(row.total),
  };
 }

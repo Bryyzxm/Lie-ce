@@ -3,6 +3,7 @@
 import React, {useMemo, useState} from 'react';
 
 import type {Product, ProductInput} from '../lib/types';
+import {formatDecimal, parseDecimalInput} from '../lib/utils';
 
 interface ProductManagerProps {
  products: Product[];
@@ -41,9 +42,12 @@ export default function ProductManager({products, busy, createAction, updateActi
   e.preventDefault();
   if (!form.name.trim()) return;
 
+  const stock = parseDecimalInput(form.stock);
+  if (stock === null || stock < 0) return;
+
   const input: ProductInput = {
    name: form.name.trim(),
-   stock: Number(form.stock),
+   stock,
    price: Number(form.price),
    modalPrice: Number(form.modalPrice),
    exp: form.exp,
@@ -59,6 +63,7 @@ export default function ProductManager({products, busy, createAction, updateActi
  const handleEdit = (product: Product) => {
   setForm({
    name: product.name,
+   // Simpan format tanpa pemisah ribuan agar bisa langsung diedit kembali.
    stock: product.stock.toString(),
    price: product.price.toString(),
    modalPrice: product.modalPrice.toString(),
@@ -94,13 +99,13 @@ export default function ProductManager({products, busy, createAction, updateActi
      required
     />
     <input
-     type="number"
+     type="text"
      name="stock"
-     placeholder="Stock"
+     placeholder="Stock (contoh: 10,5)"
+     inputMode="decimal"
      value={form.stock}
      onChange={handleChange}
      className="border border-gray-400 p-3 rounded focus:outline-none focus:ring-2 focus:ring-black transition"
-     min={0}
      required
     />
     <input
@@ -175,7 +180,7 @@ export default function ProductManager({products, busy, createAction, updateActi
        >
         <td className="border border-gray-300 p-3">{index + 1}</td>
         <td className="border border-gray-300 p-3">{product.name}</td>
-        <td className="border border-gray-300 p-3">{product.stock}</td>
+        <td className="border border-gray-300 p-3">{formatDecimal(product.stock)}</td>
         <td className="border border-gray-300 p-3">{product.price.toLocaleString()}</td>
         <td className="border border-gray-300 p-3">{product.modalPrice.toLocaleString()}</td>
         <td className={'border border-gray-300 p-3' + (expWarnings[product.id] ? ' text-red-600 font-bold' : '')}>{product.exp}</td>

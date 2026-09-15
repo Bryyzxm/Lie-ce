@@ -3,6 +3,7 @@
 import React, {useMemo} from 'react';
 
 import type {Transaction} from '../lib/types';
+import {formatDecimal} from '../lib/utils';
 
 interface ReportsProps {
  transactions: Transaction[];
@@ -59,9 +60,9 @@ export default function Reports({transactions}: Readonly<ReportsProps>) {
       className="p-6 border rounded-lg shadow-md bg-gray-50 flex flex-col items-center"
      >
       <h3 className="text-lg font-semibold mb-3">{bucket.label}</h3>
-      <p className="text-3xl font-extrabold">Rp {bucket.total.toLocaleString()}</p>
+      <p className="text-3xl font-extrabold">Rp {formatDecimal(bucket.total)}</p>
       <p className="text-sm text-gray-600 mt-1">{bucket.count} transactions</p>
-      <p className="text-lg text-green-600 mt-2">Profit: Rp {bucket.profit.toLocaleString()}</p>
+      <p className="text-lg text-green-600 mt-2">Profit: Rp {formatDecimal(bucket.profit)}</p>
      </div>
     ))}
    </div>

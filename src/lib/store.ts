@@ -136,7 +136,7 @@ export async function importLegacyData(legacy: LegacyData): Promise<{products: n
  if (legacy.products.length > 0) {
   const payload = legacy.products.map((p) => ({
    name: (p.name ?? '').trim() || 'Tanpa nama',
-   stock: Math.max(0, Math.trunc(Number(p.stock) || 0)),
+   stock: Math.max(0, Number(p.stock) || 0),
    price: Math.max(0, Math.trunc(Number(p.price) || 0)),
    modal_price: Math.max(0, Math.trunc(Number(p.modalPrice ?? p.cost) || 0)),
    exp: EXP_PATTERN.test(p.exp ?? '') ? p.exp : null,
@@ -155,18 +155,18 @@ export async function importLegacyData(legacy: LegacyData): Promise<{products: n
  const today = new Date().toISOString().slice(0, 10);
  const transactionRows = legacy.transactions
   .map((tx) => {
-   const quantity = Math.trunc(Number(tx.quantity) || 0);
+   const quantity = Math.max(0, Number(tx.quantity) || 0);
    if (quantity <= 0) return null;
 
    const mapped = tx.productId ? byLegacyId.get(tx.productId) : undefined;
-   const total = Math.max(0, Math.trunc(Number(tx.total) || 0));
+   const total = Math.max(0, Number(tx.total) || 0);
 
    return {
     product_id: mapped?.id ?? null,
     product_name: mapped?.name ?? 'Produk lama',
     occurred_on: /^\d{4}-\d{2}-\d{2}$/.test(tx.date ?? '') ? tx.date : today,
     quantity,
-    unit_price: Math.max(0, mapped?.price ?? Math.trunc(total / quantity)),
+    unit_price: Math.max(0, mapped?.price ?? Math.floor(total / quantity)),
     unit_cost: Math.max(0, mapped?.modalPrice ?? 0),
    };
   })
